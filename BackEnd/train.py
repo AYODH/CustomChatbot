@@ -6,10 +6,13 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import SGD
 from sklearn.preprocessing import LabelEncoder
-from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+from nltk.tokenize import word_tokenize
 import nltk
+import pickle
 
+# Download required NLTK data
 nltk.download("punkt")
 nltk.download("wordnet")
 
@@ -17,7 +20,7 @@ nltk.download("wordnet")
 with open("intents.json") as file:
     intents = json.load(file)
 
-    lemmatizer = WordNetLemmatizer()
+lemmatizer = WordNetLemmatizer()
 
 # Preprocessing the data
 words = []
@@ -27,22 +30,14 @@ ignore_words = ["?", "!", ".", ","]
 
 for intent in intents["intents"]:
     for pattern in intent["patterns"]:
-        # Tokenize each word
         word_list = word_tokenize(pattern)
         words.extend(word_list)
-
-        # Add to documents
         documents.append((word_list, intent["tag"]))
-
-        # Add to classes if not already present
         if intent["tag"] not in classes:
             classes.append(intent["tag"])
 
-            # Lemmatize and lower each word and remove duplicates
 words = [lemmatizer.lemmatize(w.lower()) for w in words if w not in ignore_words]
 words = sorted(set(words))
-
-# Sort classes
 classes = sorted(set(classes))
 
 # Create training data
@@ -51,18 +46,23 @@ out_empty = [0] * len(classes)
 
 for doc in documents:
     bag = []
-    word_patterns = doc[0]
-    word_patterns = [lemmatizer.lemmatize(word.lower()) for word in word_patterns]
+    word_patterns = [lemmatizer.lemmatize(word.lower()) for word in doc[0]]
     for word in words:
-        bag.append(1) if word in word_patterns else bag.append(0)
+        bag.append(1 if word in word_patterns else 0)
+
     output_row = list(out_empty)
     output_row[classes.index(doc[1])] = 1
     training.append([bag, output_row])
 
-    random.shuffle(training)
+# Shuffle and convert to np array
+random.shuffle(training)
 training = np.array(training, dtype=object)
 
-# Building the model
+# Split into train_x and train_y
+train_x = list(training[:, 0])
+train_y = list(training[:, 1])
+
+# Build the model
 model = Sequential()
 model.add(Dense(128, input_shape=(len(train_x[0]),), activation="relu"))
 model.add(Dropout(0.5))
@@ -75,14 +75,13 @@ sgd = SGD(learning_rate=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
 
 # Train the model
-model.fit(train_x, train_y, epochs=200, batch_size=5, verbose=1)
+model.fit(np.array(train_x), np.array(train_y), epochs=200, batch_size=5, verbose=1)
 
 # Save the model and metadata
 model.save("chatbot_model.h5")
 with open("words.pkl", "wb") as f:
-    import pickle
-
     pickle.dump(words, f)
 with open("classes.pkl", "wb") as f:
     pickle.dump(classes, f)
-    print("Model trained and saved successfully.")
+
+print("Model trained and saved successfully.")
