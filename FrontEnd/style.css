@@ -11,3 +11,24 @@
     box-shadow: 0 40px 20px rgba(0, 0, 0, 0.2);
     transition: all 0.5s ease-in-out;
 }
+
+.chatbox_support{
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    height: 100%;
+    transition: all 0.3s ease-in-out;
+}
+
+.chatbox_icon{
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #28a745;
+    color: #fff;
+    padding: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3 ease;
+}
