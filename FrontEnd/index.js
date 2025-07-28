@@ -33,5 +33,97 @@ document.addEventListener('DOMContentLoaded', function() {
 
             closeButton.addEventListener('click', () => this.toggleState());
         }
+
+        toggleState(){
+            this.state = !this.state;
+
+            if(this.state){
+                this.args.chatBox.Style.display = 'block';
+                this.args.chatBox.classList.add('chatbox--active');
+
+                if(!this.greetingDisplayed){
+                    setTimeout(() => {
+                        let msg = {name: "Bot", message: "Hello! How can I assist you today?"};
+                        this.messages.push(msg);
+                        this.updateChatText(this.args.chatBox);
+                        this.greetingDisplayed = true;  //Set flag to true after greeting is displayed
+                    }, 500);
+
+                }
+            } else {
+                this.args.chatBox.classList.remove('chatbox--active');
+                this.args.chatBox.style.display = 'none';
+            }
+        }
+
+        onSendButton(chatBos){
+            const textField = chatbox.querySelector('input');
+            const text1 = textField.value;
+            if(text1 === ""){
+                return;
+            }
+
+            let msg1 = {name: "User", message: text1};
+            this.messages.push(msg1);
+            this.updateChatText(chatbox);
+
+            setTimeout(() => {
+                let msg2 = {name: "Bot", message: "Typing..."};
+                this.messages.push(msg2);
+                this.updateChatText(chatbox);
+
+                this.getChatResponse(text1, (responseText) => {
+                    msg2.message = responseText;
+                    this.updateChatText(chatbox);
+                });
+
+                textField.value = '';
+            }, 500);
+        }
+
+        updateChatText(chatbox){
+            var html = '';
+            this.messages.slice().reverse().forEach(function(item){
+                if(item.name === "User"){
+                    html += '<div class="messages__item messages__item--operator"><img src="1703354587672.jpeg" />' + item.message + '</div>';
+                } else {
+                    html += '<div class="messages__item messages__item--visitor"><img src="chatbot.png" />' + item.message + '</div>';
+                }
+            });
+
+            const chatmessage = chatbox.querySelector('.chatbox_messages');
+            chatmessage.innerHTML = html;
+        }
+
+        getChatResponse(userMessage, callback){
+            const data = {
+                message: userMessage
+            };
+
+            fetch('http://localhost:5000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.response){
+                    const botResponse = data.response;
+                    callback(botResponse);
+                } else {
+                    console.error("Invalid response from server:", data);
+                    callback("Sorry, I couldn't get a response. Please try again later.");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching chat response:", error);
+                callback("Sorry, I couldn't get a response. Please try again later.");
+            });
+        }
     }
+
+    const chatbox = new Chatbox();
+    chatbox.display();
 });
