@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var html = '';
             this.messages.slice().reverse().forEach(function (item) {
                 if (item.name === "User") {
-                    html += '<div class="messages__item messages__item--operator"><img src="1703354587672.jpeg" />' + item.message + '</div>';
+                    html += '<div class="messages__item messages__item--operator"><img src="2290035.png" />' + item.message + '</div>';
                 } else {
                     html += '<div class="messages__item messages__item--visitor"><img src="chatbot.png" />' + item.message + '</div>';
                 }
