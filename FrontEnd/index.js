@@ -1,23 +1,23 @@
-document.addEventListener('DOMContentLoaded', function() {
-    class Chatbox{
-        constructor(){
+document.addEventListener('DOMContentLoaded', function () {
+    class Chatbox {
+        constructor() {
             this.args = {
-                openButton: document.querySelector('.chatbox_icon'),
+                openButton: document.querySelector('.chatbox__icon'),
                 chatBox: document.querySelector('.chatbox'),
-                sendButton: document.querySelector('.chatbox_send--footer'),
-                closeButton: document.querySelector('.chatbox_close'),
+                sendButton: document.querySelector('.chatbox__send--footer'),
+                closeButton: document.querySelector('.chatbox__close'),
             };
 
             this.state = false;
             this.messages = [];
-            this.greetingDisplayed = false;  //Flag to check if greeting is displayed
+            this.greetingDisplayed = false;  // Flag to check if greeting is displayed
         }
 
-        display(){
-            const {openButton, chatBox, sendButton, closeButton} = this.args;
+        display() {
+            const { openButton, chatBox, sendButton, closeButton } = this.args;
 
-            if(!openButton || !chatBox || !sendButton || !closeButton){
-                console.error("Chatbox elements not found in the DOM.");
+            if (!openButton || !chatBox || !sendButton || !closeButton) {
+                console.error('Error: Could not find required elements.');
                 return;
             }
 
@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
             sendButton.addEventListener('click', () => this.onSendButton(chatBox));
 
             const node = chatBox.querySelector('input');
-            node.addEventListener('keyup', ({ key }) => {
-                if (key === 'Enter') {
+            node.addEventListener("keyup", ({ key }) => {
+                if (key === "Enter") {
                     this.onSendButton(chatBox);
                 }
             });
@@ -34,21 +34,21 @@ document.addEventListener('DOMContentLoaded', function() {
             closeButton.addEventListener('click', () => this.toggleState());
         }
 
-        toggleState(){
+        toggleState() {
             this.state = !this.state;
 
-            if(this.state){
-                this.args.chatBox.Style.display = 'block';
+            if (this.state) {
+                this.args.chatBox.style.display = 'block';
                 this.args.chatBox.classList.add('chatbox--active');
 
-                if(!this.greetingDisplayed){
+                // Only send static greeting once
+                if (!this.greetingDisplayed) {
                     setTimeout(() => {
-                        let msg = {name: "Bot", message: "Hello! How can I assist you today?"};
+                        let msg = { name: "Bot", message: "Hey there! How can I help you today?  " };
                         this.messages.push(msg);
                         this.updateChatText(this.args.chatBox);
-                        this.greetingDisplayed = true;  //Set flag to true after greeting is displayed
-                    }, 500);
-
+                        this.greetingDisplayed = true; // Mark greeting as displayed
+                    }, 500); // Delay for effect
                 }
             } else {
                 this.args.chatBox.classList.remove('chatbox--active');
@@ -56,50 +56,53 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        onSendButton(chatBos){
+        onSendButton(chatbox) {
             const textField = chatbox.querySelector('input');
-            const text1 = textField.value;
-            if(text1 === ""){
+            let text1 = textField.value;
+            if (text1 === "") {
                 return;
             }
 
-            let msg1 = {name: "User", message: text1};
+            let msg1 = { name: "User", message: text1 };
             this.messages.push(msg1);
             this.updateChatText(chatbox);
 
             setTimeout(() => {
-                let msg2 = {name: "Bot", message: "Typing..."};
+                let msg2 = { name: "Bot", message: "Typing..." };  // Show typing status first
                 this.messages.push(msg2);
                 this.updateChatText(chatbox);
 
-                this.getChatResponse(text1, (responseText) => {
-                    msg2.message = responseText;
+                // Call the local Flask API to get the chatbot's response
+                this.getChatbotResponse(text1, (responseText) => {
+                    msg2.message = responseText;  // Bot's actual response
                     this.updateChatText(chatbox);
                 });
 
-                textField.value = '';
+                textField.value = '';  // Clear input field
             }, 500);
         }
 
-        updateChatText(chatbox){
+        updateChatText(chatbox) {
             var html = '';
-            this.messages.slice().reverse().forEach(function(item){
-                if(item.name === "User"){
+            this.messages.slice().reverse().forEach(function (item) {
+                if (item.name === "User") {
                     html += '<div class="messages__item messages__item--operator"><img src="1703354587672.jpeg" />' + item.message + '</div>';
                 } else {
                     html += '<div class="messages__item messages__item--visitor"><img src="chatbot.png" />' + item.message + '</div>';
                 }
             });
 
-            const chatmessage = chatbox.querySelector('.chatbox_messages');
+            const chatmessage = chatbox.querySelector('.chatbox__messages');
             chatmessage.innerHTML = html;
         }
 
-        getChatResponse(userMessage, callback){
+        getChatbotResponse(userMessage, callback) {
+            // Prepare the request payload
             const data = {
-                message: userMessage
+                message: userMessage  // Send message to the local Flask server
             };
 
+            // Call the local Flask API
             fetch('http://localhost:5000/chat', {
                 method: 'POST',
                 headers: {
@@ -107,23 +110,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.response){
-                    const botResponse = data.response;
-                    callback(botResponse);
-                } else {
-                    console.error("Invalid response from server:", data);
-                    callback("Sorry, I couldn't get a response. Please try again later.");
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching chat response:", error);
-                callback("Sorry, I couldn't get a response. Please try again later.");
-            });
+                .then(response => response.json())
+                .then(data => {
+                    // Check if the response contains the correct structure and extract the bot response
+                    if (data && data.response) {
+                        const botResponse = data.response;  // Bot's actual response
+                        callback(botResponse);  // Pass the bot's response back to the callback function
+                    } else {
+                        console.error('Invalid response structure:', data);
+                        callback("Sorry, I couldn't get a response. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    callback("Sorry, I couldn't get a response. Please try again.");
+                });
         }
     }
 
     const chatbox = new Chatbox();
     chatbox.display();
 });
+
+
+
