@@ -223,18 +223,6 @@ Sends a user message to the chatbot and receives a response.
 
 This project is provided as-is for educational and development purposes.
 
-## 👤 Author
-
-AYODH
-
 ## 🤝 Contributing
 
 Feel free to fork this project and submit pull requests for any improvements.
-
-## 📧 Contact
-
-For questions or feedback, please contact the project owner.
-
----
-
-**Last Updated**: December 2025
